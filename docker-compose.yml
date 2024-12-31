@@ -1,0 +1,29 @@
+#Define servicos
+services:
+  
+  nginx:
+    image: nginx:latest    # Define imagem do nginx
+    container_name: nginx  # Define o nome do container
+    ports:  # Define o uso de portas do container
+      - "8080:80"  # Mapeia a porta 8080 do servidor/PC para a 80 do container
+    networks: # Define a rede do container
+       - monitoramento
+
+
+  monitor:
+    build: ./monitoring
+    image: ubuntu:latest
+    container_name: monitoramento
+    command: ["bash", "-c", "while true; do /scripts/check_logs.sh; /scripts/check_resources.sh; /scripts/check_status.sh; sleep 60; done"] # Comando para rodar os scripts a cada minuto
+    networks:
+     - monitoramento # Adiciona o container a mesma rede do serviço do NGINX
+    volumes:
+      - ./monitoring:/scripts
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - nginx
+    restart: always
+
+networks:
+  monitoramento:
+    driver: bridge
